@@ -1,0 +1,55 @@
+<script src="yadacoinwebstatic/lib/jquery/dist/jquery.js"></script>
+<script src="yadacoinwebstatic/lib/bootstrap/dist/js/bootstrap.min.js"></script>
+<link href="yadacoinwebstatic/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+<body data-spy="scroll" data-target=".onpage-navigation" data-offset="60">
+    <main>
+      <div class="main">
+        <section class="module container" id="about">
+            <h1>YadaCoin Pool Stats</h1>
+            <form method="GET" action="." id="form">
+                <input type="text" name="address" id="address" placeholder="address" class="form-control" />
+                <button class="form-control">Get stats</button>
+            </form>
+            <h2>Recent 100 shares</h2>
+            <table id="shares-table" class="table">
+                <tr><td>No results</td></tr>
+            </table>
+            <h2>Recent 100 payouts</h2>
+            <table id="payouts-table" class="table">
+                <tr><td>No results</td></tr>
+            </table>
+        </section>
+      </div>
+      <div class="scroll-up"><a href="#totop"><i class="fa fa-angle-double-up"></i></a></div>
+    </main>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            $('#form').submit(function(e) {
+                e.preventDefault();
+                $.get('/shares-for-address?address=' + $('#address').val()).then((data) => {
+                    if(data.results.length === 0) return $('#shares-table').html('<tr><td>No results</td></tr>');
+                    $('#shares-table').html('');
+                    $('#shares-table').append('<tr><th>Height</th><th>Hash</th></tr>');
+                    for(var i=0; i < data.results.length; i++) {
+                        $('#shares-table').append('<tr><td><a target="_blank" href="https://yadacoin.io/explorer?term=' + data.results[i].index + '">' + data.results[i].index + '</a></td><td><a target="_blank" href="https://yadacoin.io/explorer?term=' + data.results[i].hash + '">' + data.results[i].hash + '</td></tr>');
+                    }
+                });
+                $.get('/payouts-for-address?address=' + $('#address').val()).then((data) => {
+                    if(data.results.length === 0) return $('#payouts-table').html('<tr><td>No results</td></tr>');
+                    $('#payouts-table').html('');
+                    $('#payouts-table').append('<tr><th>Height</th><th>Amount</th></tr>');
+                    for(var i=0; i < data.results.length; i++) {
+                        var selectOutput = {};
+                        for(var j=0; j < data.results[i]['txn'].outputs.length; j++) {
+                            if(data.results[i]['txn'].outputs[j].to === $('#address').val()) {
+                                selectOutput = data.results[i]['txn'].outputs[j];
+                            }
+                        }
+                        $('#payouts-table').append('<tr><td><a target="_blank" href="https://yadacoin.io/explorer?term=' + data.results[i].index + '">' + data.results[i].index + '</a></td><td>' + parseFloat(selectOutput.value).toFixed(8) + '</td></tr>');
+                    }
+                });
+            });
+        });
+    </script>
+  </body>
+</html>
