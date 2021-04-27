@@ -1,4 +1,5 @@
 import os
+from tornado.web import Application, StaticFileHandler
 from yadacoin.http.base import BaseHandler
 
 
@@ -27,4 +28,5 @@ class PoolStatsInterfaceHandler(BaseWebHandler):
 
 HANDLERS = [
     (r'/pool-stats', PoolStatsInterfaceHandler),
+    (r'/yadacoinpoolstatic/(.*)', StaticFileHandler, {"path": os.path.join(os.path.dirname(__file__), 'static')}),
 ]
