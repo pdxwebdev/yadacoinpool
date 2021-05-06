@@ -31,6 +31,8 @@
           </div>
           <div style="width: 350px; clear: left; float:left">
             <h2>Network</h2>
+            <h4 style="font-weight: bold;">Hash rate</h4 style="font-weight: bold;">
+            <div id="network-hash-rate"></div>
             <h4 style="font-weight: bold;">Height</h4 style="font-weight: bold;">
             <div id="network-height"></div>
             <h4 style="font-weight: bold;">Reward</h4 style="font-weight: bold;">
@@ -80,6 +82,7 @@
                 newDate.setTime(data.network.last_block*1000);
                 dateString = newDate.toUTCString();
                 $('#network-last-block').html(dateString);
+                $('#network-hash-rate').html(data.network.hashes_per_second.toFixed(0) + 'H/s');
 
                 $('#market-last-btc').html(data.market.last_btc);
             })

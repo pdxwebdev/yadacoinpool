@@ -52,6 +52,16 @@ class PoolInfoHandler(BaseWebHandler):
         last_block_found = await self.config.mongo.async_db.blocks.find_one({'index': last_block_found_payout['index']})
         prev_block = await self.config.mongo.async_db.blocks.find_one({'index': self.config.LatestBlock.block.index - 10})
         seconds_elapsed = int(self.config.LatestBlock.block.time) - int(prev_block['time'])
+
+        expected_blocks = 144
+        difficulty = CHAIN.MAX_TARGET_V3 / self.config.LatestBlock.block.target
+        net_blocks_found = self.config.mongo.async_db.blocks.find({'index': {'$gte': self.config.LatestBlock.block.index - 288}}).sort([('index', -1)])
+        include_blocks = []
+        async for x in net_blocks_found:
+            if int(x['time']) > time.time() - 600:
+                include_blocks.append(x)
+        network_hash_rate = ((len(include_blocks)/expected_blocks)*difficulty * 2**32 / 600)
+
         self.render_as_json({
             'pool': {
                 'hashes_per_second': (shares_count * 1000) / float(seconds_elapsed / 60), # it takes 1000H/s to produce 1 0x0000f... share per minute
@@ -66,7 +76,8 @@ class PoolInfoHandler(BaseWebHandler):
             'network': {
                 'height': self.config.LatestBlock.block.index,
                 'reward': CHAIN.get_block_reward(self.config.LatestBlock.block.index),
-                'last_block': self.config.LatestBlock.block.time
+                'last_block': self.config.LatestBlock.block.time,
+                'hashes_per_second': network_hash_rate
             },
             'market': {
                 'last_btc': last_btc
