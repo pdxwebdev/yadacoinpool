@@ -26,6 +26,8 @@
           <div style="width: 350px; float:left;clear:right;">
             <h4 style="font-weight: bold;">Min payout</h4 style="font-weight: bold;">
             <div id="pool-min-payout"></div>
+            <h4 style="font-weight: bold;">Url</h4 style="font-weight: bold;">
+            <div id="pool-url"></div>
           </div>
           <div style="width: 350px; clear: left; float:left">
             <h2>Network</h2>
@@ -70,6 +72,7 @@
                 $('#pool-fee').html(data.pool.pool_fee);
                 $('#pool-blocks-found').html(data.pool.blocks_found);
                 $('#pool-min-payout').html(data.pool.min_payout);
+                $('#pool-url').html(data.pool.url);
 
                 $('#network-height').html(data.network.height);
                 $('#network-reward').html(data.network.reward);

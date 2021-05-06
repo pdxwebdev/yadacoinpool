@@ -60,7 +60,8 @@ class PoolInfoHandler(BaseWebHandler):
                 'payout_scheme': 'PPLNS',
                 'pool_fee': self.config.pool_take,
                 'blocks_found': blocks_found,
-                'min_payout': 0
+                'min_payout': 0,
+                'url': f'{self.config.peer_host}:{self.config.stratum_pool_port}'
             },
             'network': {
                 'height': self.config.LatestBlock.block.index,
