@@ -64,7 +64,7 @@ class PoolInfoHandler(BaseWebHandler):
             'network': {
                 'height': self.config.LatestBlock.block.index,
                 'reward': CHAIN.get_block_reward(self.config.LatestBlock.block.index),
-                'last_block': last_block_found.get('index') if last_block_found else 0
+                'last_block': last_block_found.get('time') if last_block_found else 0
             },
             'market': {
                 'last_btc': last_btc

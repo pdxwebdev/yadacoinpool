@@ -61,7 +61,10 @@
         $(document).ready(function() {
             $.get('/pool-info').then((data) => {
                 $('#pool-hash-rate').html(data.pool.hashes_per_second);
-                $('#pool-last-block').html(data.pool.last_block);
+                var newDate = new Date();
+                newDate.setTime(data.pool.last_block*1000);
+                dateString = newDate.toUTCString();
+                $('#pool-last-block').html(dateString);
                 $('#pool-miner-count').html(data.pool.miner_count);
                 $('#pool-payout-scheme').html(data.pool.payout_scheme);
                 $('#pool-fee').html(data.pool.pool_fee);
@@ -70,7 +73,10 @@
 
                 $('#network-height').html(data.network.height);
                 $('#network-reward').html(data.network.reward);
-                $('#network-last-block').html(data.network.last_block);
+                var newDate = new Date();
+                newDate.setTime(data.network.last_block*1000);
+                dateString = newDate.toUTCString();
+                $('#network-last-block').html(dateString);
 
                 $('#market-last-btc').html(data.market.last_btc);
             })
