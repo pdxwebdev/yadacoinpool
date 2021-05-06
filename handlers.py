@@ -48,14 +48,15 @@ class PoolInfoHandler(BaseWebHandler):
             
         shares_count = await self.config.mongo.async_db.shares.count_documents({'index': { '$gte': self.config.LatestBlock.block.index - 10}})
         blocks_found = await self.config.mongo.async_db.share_payout.count_documents({})
-        last_block_found = await self.config.mongo.async_db.share_payout.find_one({}, sort=[('index', -1)])
+        last_block_found_payout = await self.config.mongo.async_db.share_payout.find_one({}, sort=[('index', -1)])
+        last_block_found = await self.config.mongo.async_db.blocks.find_one({'index': last_block_found_payout['index']})
         prev_block = await self.config.mongo.async_db.blocks.find_one({'index': self.config.LatestBlock.block.index - 10})
         seconds_elapsed = int(self.config.LatestBlock.block.time) - int(prev_block['time'])
         self.render_as_json({
             'pool': {
                 'hashes_per_second': (shares_count * 1000) / float(seconds_elapsed / 60), # it takes 1000H/s to produce 1 0x0000f... share per minute
                 'miner_count': len(self.config.poolServer.inbound_streams['Miner'].keys()),
-                'last_block': self.config.LatestBlock.block.time,
+                'last_block': last_block_found['time'] if last_block_found else 0,
                 'payout_scheme': 'PPLNS',
                 'pool_fee': self.config.pool_take,
                 'blocks_found': blocks_found,
@@ -64,7 +65,7 @@ class PoolInfoHandler(BaseWebHandler):
             'network': {
                 'height': self.config.LatestBlock.block.index,
                 'reward': CHAIN.get_block_reward(self.config.LatestBlock.block.index),
-                'last_block': last_block_found.get('time') if last_block_found else 0
+                'last_block': self.config.LatestBlock.block.time
             },
             'market': {
                 'last_btc': last_btc
