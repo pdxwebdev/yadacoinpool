@@ -62,7 +62,7 @@
     <script type="text/javascript">
         $(document).ready(function() {
             $.get('/pool-info').then((data) => {
-                $('#pool-hash-rate').html(data.pool.hashes_per_second);
+                $('#pool-hash-rate').html(data.pool.hashes_per_second.toFixed(0) + 'H/s');
                 var newDate = new Date();
                 newDate.setTime(data.pool.last_block*1000);
                 dateString = newDate.toUTCString();
