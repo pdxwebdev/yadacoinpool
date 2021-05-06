@@ -5,7 +5,42 @@
     <main>
       <div class="main">
         <section class="module container" id="about">
-            <h1>YadaCoin Pool Stats</h1>
+          <h1>YadaCoin Pool Stats</h1>
+          <h2>Pool</h2>
+          <div style="width: 350px; float:left;">
+            <h4 style="font-weight: bold;">Hash rate</h4 style="font-weight: bold;">
+            <div id="pool-hash-rate"></div>
+            <h4 style="font-weight: bold;">Last block</h4 style="font-weight: bold;">
+            <div id="pool-last-block"></div>
+            <h4 style="font-weight: bold;">Miner count</h4 style="font-weight: bold;">
+            <div id="pool-miner-count"></div>
+          </div>
+          <div style="width: 350px; float:left;">
+            <h4 style="font-weight: bold;">Payout scheme</h4 style="font-weight: bold;">
+            <div id="pool-payout-scheme"></div>
+            <h4 style="font-weight: bold;">Fee</h4 style="font-weight: bold;">
+            <div id="pool-fee"></div>
+            <h4 style="font-weight: bold;">Blocks found</h4 style="font-weight: bold;">
+            <div id="pool-blocks-found"></div>
+          </div>
+          <div style="width: 350px; float:left;clear:right;">
+            <h4 style="font-weight: bold;">Min payout</h4 style="font-weight: bold;">
+            <div id="pool-min-payout"></div>
+          </div>
+          <div style="width: 350px; clear: left; float:left">
+            <h2>Network</h2>
+            <h4 style="font-weight: bold;">Height</h4 style="font-weight: bold;">
+            <div id="network-height"></div>
+            <h4 style="font-weight: bold;">Reward</h4 style="font-weight: bold;">
+            <div id="network-reward"></div>
+            <h4 style="font-weight: bold;">Last block</h4 style="font-weight: bold;">
+            <div id="network-last-block"></div>
+          </div>
+          <div style="width: 150px; float:left;">
+            <h2>Market</h2>
+            <h4 style="font-weight: bold;">YDABTC</h4 style="font-weight: bold;">
+            <div id="market-last-btc"></div>
+          </div>
             <form method="GET" action="." id="form">
                 <input type="text" name="address" id="address" placeholder="address" class="form-control" />
                 <button class="form-control">Get stats</button>
@@ -24,6 +59,21 @@
     </main>
     <script type="text/javascript">
         $(document).ready(function() {
+            $.get('/pool-info').then((data) => {
+                $('#pool-hash-rate').html(data.pool.hashes_per_second);
+                $('#pool-last-block').html(data.pool.last_block);
+                $('#pool-miner-count').html(data.pool.miner_count);
+                $('#pool-payout-scheme').html(data.pool.payout_scheme);
+                $('#pool-fee').html(data.pool.pool_fee);
+                $('#pool-blocks-found').html(data.pool.blocks_found);
+                $('#pool-min-payout').html(data.pool.min_payout);
+
+                $('#network-height').html(data.network.height);
+                $('#network-reward').html(data.network.reward);
+                $('#network-last-block').html(data.network.last_block);
+
+                $('#market-last-btc').html(data.market.last_btc);
+            })
             $('#form').submit(function(e) {
                 e.preventDefault();
                 $.get('/shares-for-address?address=' + $('#address').val()).then((data) => {
