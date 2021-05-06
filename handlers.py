@@ -49,7 +49,10 @@ class PoolInfoHandler(BaseWebHandler):
         shares_count = await self.config.mongo.async_db.shares.count_documents({'index': { '$gte': self.config.LatestBlock.block.index - 10}})
         blocks_found = await self.config.mongo.async_db.share_payout.count_documents({})
         last_block_found_payout = await self.config.mongo.async_db.share_payout.find_one({}, sort=[('index', -1)])
-        last_block_found = await self.config.mongo.async_db.blocks.find_one({'index': last_block_found_payout['index']})
+        if last_block_found_payout:
+            last_block_found = await self.config.mongo.async_db.blocks.find_one({'index': last_block_found_payout['index']})
+        else:
+            last_block_found = None
         prev_block = await self.config.mongo.async_db.blocks.find_one({'index': self.config.LatestBlock.block.index - 10})
         seconds_elapsed = int(self.config.LatestBlock.block.time) - int(prev_block['time'])
 
