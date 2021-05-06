@@ -71,7 +71,7 @@
                 $('#pool-last-block').html(dateString);
                 $('#pool-miner-count').html(data.pool.miner_count);
                 $('#pool-payout-scheme').html(data.pool.payout_scheme);
-                $('#pool-fee').html(data.pool.pool_fee);
+                $('#pool-fee').html(data.pool.pool_fee * 100 + '%');
                 $('#pool-blocks-found').html(data.pool.blocks_found);
                 $('#pool-min-payout').html(data.pool.min_payout);
                 $('#pool-url').html(data.pool.url);
