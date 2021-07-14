@@ -45,51 +45,88 @@ class PoolInfoHandler(BaseWebHandler):
             last_btc = self.config.ticker.json()['ydabtc']['ticker']['last']
         except:
             last_btc = 0
-            
-        shares_count = await self.config.mongo.async_db.shares.count_documents({'index': { '$gte': self.config.LatestBlock.block.index - 10}})
-        blocks_found = await self.config.mongo.async_db.share_payout.count_documents({})
-        last_block_found_payout = await self.config.mongo.async_db.share_payout.find_one({}, sort=[('index', -1)])
-        if last_block_found_payout:
-            last_block_found = await self.config.mongo.async_db.blocks.find_one({'index': last_block_found_payout['index']})
-        else:
-            last_block_found = None
-        prev_block = await self.config.mongo.async_db.blocks.find_one({'index': self.config.LatestBlock.block.index - 10})
-        seconds_elapsed = int(self.config.LatestBlock.block.time) - int(prev_block['time'])
+        await self.config.LatestBlock.block_checker()
+        pool_public_key = self.config.pool_public_key if hasattr(self.config, 'pool_public_key') else self.config.public_key
+        total_blocks_found = await self.config.mongo.async_db.blocks.count_documents(
+            {
+                'public_key': pool_public_key
+            }
+        )
 
         expected_blocks = 144
-        difficulty = CHAIN.MAX_TARGET_V3 / self.config.LatestBlock.block.target
-        net_blocks_found = self.config.mongo.async_db.blocks.find({'index': {'$gte': self.config.LatestBlock.block.index - 288}}).sort([('index', -1)])
-        include_blocks = []
-        async for x in net_blocks_found:
-            if int(x['time']) > time.time() - 600:
-                include_blocks.append(x)
-        network_hash_rate = ((len(include_blocks)/expected_blocks)*difficulty * 2**32 / 600)
+        pool_blocks_found = self.config.mongo.async_db.blocks.find(
+            {
+                'public_key': pool_public_key,
+                'time': {'$gte': time.time() - ( 600 * 144 )}
+            },
+            {
+                '_id': 0
+            }
+        ).sort([('index', -1)])
+        expected_blocks = 144
+        pool_blocks_found_list = await pool_blocks_found.to_list(length=expected_blocks)
+        if len(pool_blocks_found_list) > 0:
+            avg_target = 0
+            for block in pool_blocks_found_list:
+                avg_target += int(block['target'], 16)
+            avg_target = avg_target / len(pool_blocks_found_list)
+            difficulty = 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffff / avg_target
+            pool_hash_rate = ((len(pool_blocks_found_list)/expected_blocks)*difficulty * 2**32 / 600)
+        else:
+            pool_hash_rate = 0
 
+        net_blocks_found = self.config.mongo.async_db.blocks.find({'time': {'$gte': time.time() - ( 600 * 144 )}})
+        net_blocks_found = await net_blocks_found.to_list(length=expected_blocks*10)
+        if len(net_blocks_found) > 0:
+            avg_net_target = 0
+            for block in net_blocks_found:
+                avg_net_target += int(block['target'], 16)
+            avg_net_target = avg_net_target / len(net_blocks_found)
+            net_difficulty = 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffff / avg_net_target
+            network_hash_rate = ((len(net_blocks_found)/expected_blocks)*net_difficulty * 2**32 / 600)
+        else:
+            net_difficulty = 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffff / 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+            network_hash_rate = 0
+
+        miner_count_pool_stat = await self.config.mongo.async_db.pool_stats.find_one({'stat': 'miner_count'})
+        worker_count_pool_stat = await self.config.mongo.async_db.pool_stats.find_one({'stat': 'worker_count'})
+        payouts = await self.config.mongo.async_db.share_payout.find({}, {'_id': 0}).sort([('index', -1)]).to_list(100)
         self.render_as_json({
             'pool': {
-                'hashes_per_second': (shares_count * 1000) / float(seconds_elapsed / 60), # it takes 1000H/s to produce 1 0x0000f... share per minute
-                'miner_count': len(self.config.poolServer.inbound_streams['Miner'].keys()),
-                'last_block': last_block_found['time'] if last_block_found else 0,
+                'hashes_per_second': pool_hash_rate,
+                'miner_count': miner_count_pool_stat['value'],
+                'worker_count': worker_count_pool_stat['value'],
                 'payout_scheme': 'PPLNS',
                 'pool_fee': self.config.pool_take,
-                'blocks_found': blocks_found,
                 'min_payout': 0,
-                'url': f'{self.config.peer_host}:{self.config.stratum_pool_port}'
+                'url': getattr(self.config, 'pool_url', f'{self.config.peer_host}:{self.config.stratum_pool_port}'),
+                'last_five_blocks': [{'timestamp': x['time'], 'height': x['index']} for x in pool_blocks_found_list[:5]],
+                'blocks_found': total_blocks_found,
+                'fee': self.config.pool_take,
+                'payout_frequency': self.config.payout_frequency,
+                'payouts': payouts,
+                'blocks': pool_blocks_found_list[:100]
             },
             'network': {
                 'height': self.config.LatestBlock.block.index,
                 'reward': CHAIN.get_block_reward(self.config.LatestBlock.block.index),
                 'last_block': self.config.LatestBlock.block.time,
-                'hashes_per_second': network_hash_rate
+                'hashes_per_second': network_hash_rate,
+                'difficulty': net_difficulty
             },
             'market': {
                 'last_btc': last_btc
+            },
+            'coin': {
+                'algo': 'randomx YDA',
+                'circulating': self.config.LatestBlock.block.index * 50,
+                'max_supply': 21000000
             }
         })
 
 
 HANDLERS = [
     (r'/pool-info', PoolInfoHandler),
-    (r'/pool-stats', PoolStatsInterfaceHandler),
+    (r'/', PoolStatsInterfaceHandler),
     (r'/yadacoinpoolstatic/(.*)', StaticFileHandler, {"path": os.path.join(os.path.dirname(__file__), 'static')}),
 ]
